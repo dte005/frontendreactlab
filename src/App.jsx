@@ -1,10 +1,14 @@
-import React from 'react';
-import {getBooks} from './services/books';
+import React, {useState} from 'react';
+import {getBooks, postBooks, deleteBook} from './services/books';
+import Books from './Books';
 var pdfMake = require('pdfmake/build/pdfmake.js');
 var pdfFonts = require('pdfmake/build/vfs_fonts.js');
 pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
 function App() {
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [refreshList, setRefreshList] = useState(false);
 
   function createPdf(){
     const resportTitle=[
@@ -62,11 +66,45 @@ function App() {
     })
   }
 
+  async function sendForm(e){
+    e.preventDefault();
+    const response = await postBooks({titulo: title});
+    console.log(response);
+    setMessage(response.message);
+    if(!response.error){
+      setRefreshList(!refreshList);
+    }
+  }
+
+  function handleChange(e){
+    setTitle(e.target.value);
+  }
+
+  async function handleDelete(index){
+    const response = await deleteBook(index);
+    console.log(response);
+    if(!response.error){
+      setRefreshList(!refreshList);
+    }
+  }
+
 
   return (
     <div>
       <h1>Gerar lista de livros mais legais!! Vai mannn... vascao campeao</h1>
       <button onClick={createPdf}>Criar pdf</button>
+      <div style={{marginTop: '50px'}}>
+        <h4>Adicione um livro na lista</h4>
+        <form>
+          <input type="text" value={title} onChange={handleChange} />
+          <button type="submit" onClick={sendForm}>Enviar</button>
+          <br />
+          <span>{message}</span>
+        </form>
+      </div>
+      <div>
+        <Books refresh={refreshList} handleDelete={handleDelete} />
+      </div>
     </div>
   );
 }
